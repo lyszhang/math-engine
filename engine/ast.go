@@ -17,6 +17,10 @@ type NumberExprAST struct {
 	Str string
 }
 
+type ParameterExprAST struct {
+	Str string
+}
+
 type BinaryExprAST struct {
 	Op string
 	Lhs,
@@ -31,6 +35,13 @@ type FunCallerExprAST struct {
 func (n NumberExprAST) toStr() string {
 	return fmt.Sprintf(
 		"NumberExprAST:%s",
+		n.Str,
+	)
+}
+
+func (n ParameterExprAST) toStr() string {
+	return fmt.Sprintf(
+		"ParameterExprAST:%s",
 		n.Str,
 	)
 }
@@ -123,6 +134,14 @@ func (a *AST) parseNumber() NumberExprAST {
 	return n
 }
 
+func (a *AST) parseParameter() ParameterExprAST {
+	n := ParameterExprAST{
+		Str: a.currTok.Tok,
+	}
+	a.getNextToken()
+	return n
+}
+
 func (a *AST) parseFunCallerOrConst() ExprAST {
 	name := a.currTok.Tok
 	a.getNextToken()
@@ -180,6 +199,8 @@ func (a *AST) parsePrimary() ExprAST {
 		return a.parseFunCallerOrConst()
 	case Literal:
 		return a.parseNumber()
+	case Parameter:
+		return a.parseParameter()
 	case Operator:
 		if a.currTok.Tok == "(" {
 			t := a.getNextToken()

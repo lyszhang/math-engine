@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Top level function
@@ -141,6 +142,8 @@ func ExprASTResult(expr ExprAST) float64 {
 		}
 	case NumberExprAST:
 		return expr.(NumberExprAST).Val
+	case ParameterExprAST:
+		return float64(time.Now().Second())
 	case FunCallerExprAST:
 		f := expr.(FunCallerExprAST)
 		def := defFunc[f.Name]

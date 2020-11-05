@@ -2,29 +2,25 @@ package engine
 
 import (
 	"errors"
-	"fmt"
-	"math"
-	"math/big"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Top level function
 // Analytical expression and execution
 // err is not nil if an error occurs (including arithmetic runtime errors)
-func ParseAndExec(s string) (r float64, err error) {
+func ParseAndExec(s string) (r *ArithmeticFactor, err error) {
 	toks, err := Parse(s)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	ast := NewAST(toks, s)
 	if ast.Err != nil {
-		return 0, ast.Err
+		return nil, ast.Err
 	}
 	ar := ast.ParseExpression()
 	if ast.Err != nil {
-		return 0, ast.Err
+		return nil, ast.Err
 	}
 	defer func() {
 		if e := recover(); e != nil {
@@ -71,14 +67,6 @@ func calPow(x float64, n int) float64 {
 	return r
 }
 
-func expr2Radian(expr ExprAST) float64 {
-	r := ExprASTResult(expr)
-	if TrigonometricMode == AngleMode {
-		r = r / 180 * math.Pi
-	}
-	return r
-}
-
 // Float64ToStr float64 -> string
 func Float64ToStr(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
@@ -86,7 +74,7 @@ func Float64ToStr(f float64) string {
 
 // RegFunction is Top level function
 // register a new function to use in expressions
-func RegFunction(name string, argc int, fun func(...ExprAST) float64) error {
+func RegFunction(name string, argc int, fun func(...ExprAST) *ArithmeticFactor) error {
 	if len(name) == 0 {
 		return errors.New("RegFunction name is not empty.")
 	}
@@ -100,55 +88,3 @@ func RegFunction(name string, argc int, fun func(...ExprAST) float64) error {
 	return nil
 }
 
-// ExprASTResult is a Top level function
-// AST traversal
-// if an arithmetic runtime error occurs, a panic exception is thrown
-func ExprASTResult(expr ExprAST) float64 {
-	var l, r float64
-	switch expr.(type) {
-	case BinaryExprAST:
-		ast := expr.(BinaryExprAST)
-		l = ExprASTResult(ast.Lhs)
-		r = ExprASTResult(ast.Rhs)
-		switch ast.Op {
-		case "+":
-			lh, _ := new(big.Float).SetString(Float64ToStr(l))
-			rh, _ := new(big.Float).SetString(Float64ToStr(r))
-			f, _ := new(big.Float).Add(lh, rh).Float64()
-			return f
-		case "-":
-			lh, _ := new(big.Float).SetString(Float64ToStr(l))
-			rh, _ := new(big.Float).SetString(Float64ToStr(r))
-			f, _ := new(big.Float).Sub(lh, rh).Float64()
-			return f
-		case "*":
-			f, _ := new(big.Float).Mul(new(big.Float).SetFloat64(l), new(big.Float).SetFloat64(r)).Float64()
-			return f
-		case "/":
-			if r == 0 {
-				panic(errors.New(
-					fmt.Sprintf("violation of arithmetic specification: a division by zero in ExprASTResult: [%g/%g]",
-						l,
-						r)))
-			}
-			f, _ := new(big.Float).Quo(new(big.Float).SetFloat64(l), new(big.Float).SetFloat64(r)).Float64()
-			return f
-		case "%":
-			return float64(int(l) % int(r))
-		case "^":
-			return Pow(l, int(r))
-		default:
-
-		}
-	case NumberExprAST:
-		return expr.(NumberExprAST).Val
-	case ParameterExprAST:
-		return float64(time.Now().Second())
-	case FunCallerExprAST:
-		f := expr.(FunCallerExprAST)
-		def := defFunc[f.Name]
-		return def.fun(f.Arg...)
-	}
-
-	return 0.0
-}

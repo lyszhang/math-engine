@@ -14,27 +14,39 @@ func main() {
 	loop()
 }
 
+func readStdin() (string, error){
+	f := bufio.NewReader(os.Stdin)
+	s, err := f.ReadString('\n')
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", err
+	}
+	if s == "exit" || s == "quit" || s == "q" {
+		fmt.Println("bye")
+		os.Exit(1)
+	}
+	return s, nil
+}
+
 // input loop
 func loop() {
-	engine.RegFunction("double", 1, func(expr ...engine.ExprAST) float64 {
-		return engine.ExprASTResult(expr[0]) * 2
-	})
+	//engine.RegFunction("double", 1, func(expr ...engine.ExprAST) float64 {
+	//	return engine.ExprASTResult(expr[0]) * 2
+	//})
 	for {
-		fmt.Print("input /> ")
-		f := bufio.NewReader(os.Stdin)
-		s, err := f.ReadString('\n')
+		fmt.Print("input formulation/> ")
+		s, err := readStdin()
 		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		s = strings.TrimSpace(s)
-		if s == "" {
-			continue
-		}
-		if s == "exit" || s == "quit" || s == "q" {
-			fmt.Println("bye")
 			break
 		}
+
+		//TODO: 外部请求路径的输入
+		//fmt.Print("input parameter query url/> ")
+
 		start := time.Now()
 		exec(s)
 		cost := time.Since(start)
@@ -71,6 +83,7 @@ func exec(exp string) {
 	}()
 	// AST traversal -> result
 	r := engine.ExprASTResult(ar)
-	fmt.Println("progressing ...\t", r)
 	fmt.Printf("%s = %v\n", exp, r)
+
+	engine.UploadResult(r.Cipher.Data)
 }

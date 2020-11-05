@@ -85,5 +85,10 @@ func exec(exp string) {
 	r := engine.ExprASTResult(ar)
 	fmt.Printf("%s = %v\n", exp, r)
 
-	engine.UploadResult(r.Cipher.Data)
+	switch r.Factor {
+	case engine.TypePaillier:
+		engine.UploadResult(r.Cipher.Data)
+	case engine.TypeConst:
+		fmt.Println("result: ", r.Number)
+	}
 }

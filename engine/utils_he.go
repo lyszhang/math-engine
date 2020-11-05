@@ -8,6 +8,7 @@ package engine
 
 import (
 	paillier "github.com/roasbeef/go-go-gadget-paillier"
+	"math/big"
 )
 
 type ArithmeticType int
@@ -24,8 +25,8 @@ type numberEncrypted struct {
 }
 
 type ArithmeticFactor struct {
-	factor ArithmeticType
-	number int64
+	Factor ArithmeticType
+	Number int64
 	Cipher numberEncrypted
 }
 
@@ -41,19 +42,55 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 		r = ExprASTResult(ast.Rhs)
 		switch ast.Op {
 		case "+":
-			lh := l.Cipher.Data
-			rh := r.Cipher.Data
-			pub := l.Cipher.PublicKey
-
-			// Add the Cipher integers 15 and 15 together.
-			plusM16M20 := paillier.AddCipher(pub, lh, rh)
-			return &ArithmeticFactor{
-				factor:    TypePaillier,
-				number:    0,
-				Cipher: numberEncrypted{
-					Data: plusM16M20,
-					PublicKey: pub,
-				},
+			// 如果双方都是明文数字
+			if l.Factor == TypeConst && r.Factor == TypeConst {
+				return &ArithmeticFactor{
+					Factor: TypeConst,
+					Number: l.Number +r.Number,
+				}
+			}
+			// 如果左侧为常数，右侧为密文
+			if l.Factor == TypeConst && r.Factor == TypePaillier {
+				pub := r.Cipher.PublicKey
+				plusEandC := paillier.Add(pub, r.Cipher.Data,
+					new(big.Int).SetInt64(l.Number).Bytes())
+				return &ArithmeticFactor{
+					Factor: TypePaillier,
+					Cipher: numberEncrypted{
+						Data: plusEandC,
+						PublicKey: pub,
+					},
+				}
+			}
+			// 如果左侧为密文，右侧为明文
+			if l.Factor == TypePaillier && r.Factor == TypeConst {
+				pub := l.Cipher.PublicKey
+				plusCandE := paillier.Add(pub, l.Cipher.Data,
+					new(big.Int).SetInt64(r.Number).Bytes())
+				return &ArithmeticFactor{
+					Factor: TypePaillier,
+					Cipher: numberEncrypted{
+						Data: plusCandE,
+						PublicKey: pub,
+					},
+				}
+			}
+			// 如果双方均为密文
+			if l.Factor == TypePaillier && r.Factor == TypePaillier {
+				lh := l.Cipher.Data
+				rh := r.Cipher.Data
+				///TODO: 公钥比对
+				pub := l.Cipher.PublicKey
+				// Add the Cipher integers 15 and 15 together.
+				plusEandE := paillier.AddCipher(pub, lh, rh)
+				return &ArithmeticFactor{
+					Factor: TypePaillier,
+					Number: 0,
+					Cipher: numberEncrypted{
+						Data: plusEandE,
+						PublicKey: pub,
+					},
+				}
 			}
 
 		///TODO: 逐个完善各类型运算符操作
@@ -80,10 +117,10 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 
 		}
 	case NumberExprAST:
-		return &ArithmeticFactor{factor: TypeConst, number: expr.(NumberExprAST).Val}
+		return &ArithmeticFactor{Factor: TypeConst, Number: expr.(NumberExprAST).Val}
 	case ParameterExprAST:
 		data, pub, _ := FetchExternalGravity(nil)
-		return &ArithmeticFactor{factor: TypePaillier, Cipher: numberEncrypted{
+		return &ArithmeticFactor{Factor: TypePaillier, Cipher: numberEncrypted{
 			Data:      data,
 			PublicKey: pub,
 		}}
@@ -93,6 +130,6 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 		return def.fun(f.Arg...)
 	}
 
-	return &ArithmeticFactor{factor: TypeConst, number: 0}
+	return &ArithmeticFactor{Factor: TypeConst, Number: 0}
 }
 

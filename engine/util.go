@@ -40,7 +40,7 @@ func ErrPos(s string, pos int) string {
 	return r + s + r
 }
 
-// the integer power of a number
+// the integer power of a Number
 func Pow(x float64, n int) float64 {
 	if x == 0 {
 		return 0

@@ -108,15 +108,59 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 
 			// 如果双方都是密文数字
 			if l.Factor == TypeConst && r.Factor == TypeConst {
+				lh := l.Cipher.Data
+				rh := r.Cipher.Data
+				///TODO: 公钥比对
+				pub := l.Cipher.PublicKey
+				// Add the Cipher integers 15 and 15 together.
+				subEandE := paillier.SubCipher(pub, lh, rh)
 				return &ArithmeticFactor{
-					Factor: TypeConst,
-					Number: l.Number - r.Number,
+					Factor: TypePaillier,
+					Number: 0,
+					Cipher: numberEncrypted{
+						Data:      subEandE,
+						PublicKey: pub,
+					},
 				}
 			}
 
-		//case "*":
-		//	f, _ := new(big.Float).Mul(new(big.Float).SetFloat64(l), new(big.Float).SetFloat64(r)).Float64()
-		//	return f
+		case "*":
+			// 如果双方都是明文数字
+			if l.Factor == TypeConst && r.Factor == TypeConst {
+				return &ArithmeticFactor{
+					Factor: TypeConst,
+					Number: l.Number * r.Number,
+				}
+			}
+
+			// 如果左侧为常数，右侧为密文
+			if l.Factor == TypeConst && r.Factor == TypePaillier {
+				pub := r.Cipher.PublicKey
+				mulEandC := paillier.Mul(pub, r.Cipher.Data,
+					new(big.Int).SetInt64(l.Number).Bytes())
+				return &ArithmeticFactor{
+					Factor: TypePaillier,
+					Cipher: numberEncrypted{
+						Data:      mulEandC,
+						PublicKey: pub,
+					},
+				}
+			}
+
+			// 如果左侧为密文，右侧为常数
+			if l.Factor == TypePaillier && r.Factor == TypeConst {
+				pub := l.Cipher.PublicKey
+				mulEandC := paillier.Mul(pub, l.Cipher.Data,
+					new(big.Int).SetInt64(r.Number).Bytes())
+				return &ArithmeticFactor{
+					Factor: TypePaillier,
+					Cipher: numberEncrypted{
+						Data:      mulEandC,
+						PublicKey: pub,
+					},
+				}
+			}
+
 		//case "/":
 		//	if r == 0 {
 		//		panic(errors.New(

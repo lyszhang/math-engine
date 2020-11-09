@@ -120,9 +120,14 @@ func (p *Parser) nextTok() *Token {
 		err = p.nextCh()
 
 	case
-		'x',
-		'y',
-		'z':
+		'a', 'b', 'c', 'd', 'e', 'f', 'g',
+		'A', 'B', 'C', 'D', 'E', 'F', 'G',
+		'h', 'i', 'j', 'k', 'l', 'm', 'n',
+		'H', 'I', 'J', 'K', 'L', 'M', 'N',
+		'o', 'p', 'q', 'r', 's', 't',
+		'O', 'P', 'Q', 'R', 'S', 'T',
+		'u', 'v', 'w', 'x', 'y', 'z',
+		'U', 'V', 'W', 'X', 'Y', 'Z':
 		tok = &Token{
 			Tok:  string(p.ch),
 			Type: Parameter,

@@ -7,20 +7,23 @@
 package engine
 
 import (
+	"github.com/dengsgo/math-engine/source"
 	paillier "github.com/roasbeef/go-go-gadget-paillier"
 	"math/big"
 )
 
 type ArithmeticType int
+
 const (
 	_ ArithmeticType = iota
 	TypePaillier
 	TypeElgmel
 	TypeConst
+	TypeEnd
 )
 
 type numberEncrypted struct {
-	Data []byte
+	Data      []byte
 	PublicKey *paillier.PublicKey
 }
 
@@ -46,7 +49,7 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 			if l.Factor == TypeConst && r.Factor == TypeConst {
 				return &ArithmeticFactor{
 					Factor: TypeConst,
-					Number: l.Number +r.Number,
+					Number: l.Number + r.Number,
 				}
 			}
 			// 如果左侧为常数，右侧为密文
@@ -57,7 +60,7 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 				return &ArithmeticFactor{
 					Factor: TypePaillier,
 					Cipher: numberEncrypted{
-						Data: plusEandC,
+						Data:      plusEandC,
 						PublicKey: pub,
 					},
 				}
@@ -70,7 +73,7 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 				return &ArithmeticFactor{
 					Factor: TypePaillier,
 					Cipher: numberEncrypted{
-						Data: plusCandE,
+						Data:      plusCandE,
 						PublicKey: pub,
 					},
 				}
@@ -87,18 +90,30 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 					Factor: TypePaillier,
 					Number: 0,
 					Cipher: numberEncrypted{
-						Data: plusEandE,
+						Data:      plusEandE,
 						PublicKey: pub,
 					},
 				}
 			}
 
-		///TODO: 逐个完善各类型运算符操作
-		//case "-":
-		//	lh, _ := new(big.Float).SetString(Float64ToStr(l))
-		//	rh, _ := new(big.Float).SetString(Float64ToStr(r))
-		//	f, _ := new(big.Float).Sub(lh, rh).Float64()
-		//	return f
+		case "-":
+			// 如果双方都是明文数字
+			//TODO：如何检测负数结果的出现
+			if l.Factor == TypeConst && r.Factor == TypeConst {
+				return &ArithmeticFactor{
+					Factor: TypeConst,
+					Number: l.Number - r.Number,
+				}
+			}
+
+			// 如果双方都是密文数字
+			if l.Factor == TypeConst && r.Factor == TypeConst {
+				return &ArithmeticFactor{
+					Factor: TypeConst,
+					Number: l.Number - r.Number,
+				}
+			}
+
 		//case "*":
 		//	f, _ := new(big.Float).Mul(new(big.Float).SetFloat64(l), new(big.Float).SetFloat64(r)).Float64()
 		//	return f
@@ -119,7 +134,7 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 	case NumberExprAST:
 		return &ArithmeticFactor{Factor: TypeConst, Number: expr.(NumberExprAST).Val}
 	case ParameterExprAST:
-		data, pub, _ := FetchExternalGravity(nil)
+		data, pub, _ := source.FetchExternalGravity(nil)
 		return &ArithmeticFactor{Factor: TypePaillier, Cipher: numberEncrypted{
 			Data:      data,
 			PublicKey: pub,
@@ -132,4 +147,3 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 
 	return &ArithmeticFactor{Factor: TypeConst, Number: 0}
 }
-

@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/dengsgo/math-engine/engine"
+	"github.com/dengsgo/math-engine/source"
 )
 
 func main() {
 	loop()
 }
 
-func readStdin() (string, error){
+func readStdin() (string, error) {
 	f := bufio.NewReader(os.Stdin)
 	s, err := f.ReadString('\n')
 	if err != nil {
@@ -34,9 +35,7 @@ func readStdin() (string, error){
 
 // input loop
 func loop() {
-	//engine.RegFunction("double", 1, func(expr ...engine.ExprAST) float64 {
-	//	return engine.ExprASTResult(expr[0]) * 2
-	//})
+	engine.RegFunction("compare", 2, engine.Compare)
 	for {
 		fmt.Print("input formulation/> ")
 		s, err := readStdin()
@@ -87,7 +86,7 @@ func exec(exp string) {
 
 	switch r.Factor {
 	case engine.TypePaillier:
-		engine.UploadResult(r.Cipher.Data)
+		source.UploadResult(r.Cipher.Data)
 	case engine.TypeConst:
 		fmt.Println("result: ", r.Number)
 	}

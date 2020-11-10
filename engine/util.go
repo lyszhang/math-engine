@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"github.com/dengsgo/math-engine/common"
 	"strconv"
 	"strings"
 )
@@ -9,7 +10,7 @@ import (
 // Top level function
 // Analytical expression and execution
 // err is not nil if an error occurs (including arithmetic runtime errors)
-func ParseAndExec(s string) (r *ArithmeticFactor, err error) {
+func ParseAndExec(s string) (r *common.ArithmeticFactor, err error) {
 	toks, err := Parse(s)
 	if err != nil {
 		return nil, err
@@ -74,7 +75,7 @@ func Float64ToStr(f float64) string {
 
 // RegFunction is Top level function
 // register a new function to use in expressions
-func RegFunction(name string, argc int, fun func(...ExprAST) *ArithmeticFactor) error {
+func RegFunction(name string, argc int, fun func(...ExprAST) *common.ArithmeticFactor) error {
 	if len(name) == 0 {
 		return errors.New("RegFunction name is not empty.")
 	}
@@ -87,4 +88,3 @@ func RegFunction(name string, argc int, fun func(...ExprAST) *ArithmeticFactor) 
 	defFunc[name] = defS{argc, fun}
 	return nil
 }
-

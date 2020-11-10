@@ -8,6 +8,7 @@ package calculate
 
 import (
 	"fmt"
+	"github.com/dengsgo/math-engine/common"
 	"github.com/dengsgo/math-engine/engine"
 	"github.com/dengsgo/math-engine/entry"
 	"github.com/dengsgo/math-engine/source"
@@ -26,12 +27,16 @@ func Exec(exp string) (result int64, processLog string) {
 	// []token -> AST Tree
 	ast := engine.NewAST(toks, exp)
 	if ast.Err != nil {
+		entry.Append("ERROR: " + ast.Err.Error())
+		processLog = entry.String()
 		fmt.Println("ERROR: " + ast.Err.Error())
 		return
 	}
 	// AST builder
 	ar := ast.ParseExpression()
 	if ast.Err != nil {
+		entry.Append("ERROR: " + ast.Err.Error())
+		processLog = entry.String()
 		fmt.Println("ERROR: " + ast.Err.Error())
 		return
 	}
@@ -49,9 +54,9 @@ func Exec(exp string) (result int64, processLog string) {
 	fmt.Printf("%s = %v\n", exp, r)
 
 	switch r.Factor {
-	case engine.TypePaillier:
+	case common.TypePaillier:
 		result, _ = source.UploadResult(r.Cipher.Data)
-	case engine.TypeConst:
+	case common.TypeConst:
 		fmt.Println("result: ", r.Number)
 		result = r.Number
 	}

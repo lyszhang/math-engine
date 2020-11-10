@@ -1,5 +1,7 @@
 package engine
 
+import "github.com/dengsgo/math-engine/common"
+
 const (
 	RadianMode = iota
 	AngleMode
@@ -7,14 +9,13 @@ const (
 
 type defS struct {
 	argc int
-	fun  func(expr ...ExprAST) *ArithmeticFactor
+	fun  func(expr ...ExprAST) *common.ArithmeticFactor
 }
 
 // enum "RadianMode", "AngleMode"
 var TrigonometricMode = RadianMode
 
-var defConst = map[string]int64{
-}
+var defConst = map[string]int64{}
 
 var defFunc map[string]defS
 
@@ -43,7 +44,7 @@ func init() {
 
 // noerr(1/0) = 0
 // noerr(2.5/(1-1)) = 0
-func defNoerr(expr ...ExprAST) (r *ArithmeticFactor) {
+func defNoerr(expr ...ExprAST) (r *common.ArithmeticFactor) {
 	defer func() {
 		if e := recover(); e != nil {
 			r = nil

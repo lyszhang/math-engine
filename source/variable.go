@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/dengsgo/math-engine/common"
 	paillier "github.com/roasbeef/go-go-gadget-paillier"
 	"io/ioutil"
 	"net/http"
@@ -129,4 +130,42 @@ func CompareResult(a, b []byte) (int64, error) {
 		fmt.Println("Fatal error ", err.Error())
 	}
 	return resp.Rs, nil
+}
+
+// TransformRequest collects the request parameters for the Query method.
+type TransformRequest struct {
+	Data common.CipherCompression
+}
+
+// TransformResponse collects the response values for the Query method.
+type TransformResponse struct {
+	Data common.CipherCompression
+	Err  error
+}
+
+func TransformExternal(d *common.CipherCompression) (*common.CipherCompression, error) {
+	req := TransformRequest{Data: *d}
+	body, err := json.Marshal(req)
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+
+	res, err := http.Post("http://127.0.0.1:5666/transform", "application/json;charset=utf-8",
+		bytes.NewBuffer(body))
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+
+	defer res.Body.Close()
+
+	content, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+	var resp TransformResponse
+	err = json.Unmarshal(content, &resp)
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+	return &resp.Data, nil
 }

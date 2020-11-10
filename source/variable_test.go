@@ -9,5 +9,5 @@ package source
 import "testing"
 
 func TestFetchExternalGravity(t *testing.T) {
-	FetchExternalGravity(nil)
+	FetchExternalGravity(nil, "x")
 }

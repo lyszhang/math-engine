@@ -29,8 +29,8 @@ type QueryResponse struct {
 	Err error
 }
 
-func FetchExternalGravity(pos *ExternalGravityPosition) ([]byte, *paillier.PublicKey, error) {
-	body := "{\"S\": \"newuser\"}"
+func FetchExternalGravity(pos *ExternalGravityPosition, key string) ([]byte, *paillier.PublicKey, error) {
+	body := fmt.Sprintf("{\"S\": \"%s\"}", key)
 	res, err := http.Post("http://127.0.0.1:5666/query", "application/json;charset=utf-8",
 		bytes.NewBuffer([]byte(body)))
 	if err != nil {
@@ -57,7 +57,13 @@ type UploadRequest struct {
 	R []byte
 }
 
-func UploadResult(r []byte) ([]byte, error) {
+// UploadResponse collects the response values for the Query method.
+type UploadResponse struct {
+	Rs  int64
+	Err error
+}
+
+func UploadResult(r []byte) (int64, error) {
 	req := UploadRequest{R: r}
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -76,8 +82,14 @@ func UploadResult(r []byte) ([]byte, error) {
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 	}
-	fmt.Println(string(content))
-	return content, nil
+
+	var resp UploadResponse
+	err = json.Unmarshal(content, &resp)
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+
+	return resp.Rs, nil
 }
 
 // CompareRequest collects the request parameters for the Query method.

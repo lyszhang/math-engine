@@ -178,7 +178,7 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 	case NumberExprAST:
 		return &ArithmeticFactor{Factor: TypeConst, Number: expr.(NumberExprAST).Val}
 	case ParameterExprAST:
-		data, pub, _ := source.FetchExternalGravity(nil)
+		data, pub, _ := source.FetchExternalGravity(nil, expr.(ParameterExprAST).Str)
 		return &ArithmeticFactor{Factor: TypePaillier, Cipher: numberEncrypted{
 			Data:      data,
 			PublicKey: pub,

@@ -9,11 +9,14 @@ package calculate
 import (
 	"fmt"
 	"github.com/dengsgo/math-engine/engine"
+	"github.com/dengsgo/math-engine/entry"
 	"github.com/dengsgo/math-engine/source"
 )
 
 // call engine
-func Exec(exp string) (result int64) {
+func Exec(exp string) (result int64, processLog string) {
+	entry.Reset()
+
 	// input text -> []token
 	toks, err := engine.Parse(exp)
 	if err != nil {
@@ -33,6 +36,8 @@ func Exec(exp string) (result int64) {
 		return
 	}
 	fmt.Printf("ExprAST: %+v\n", ar)
+	entry.Append(fmt.Sprintf("ExprAST: %+v\n", ar))
+
 	// catch runtime errors
 	defer func() {
 		if e := recover(); e != nil {
@@ -50,5 +55,6 @@ func Exec(exp string) (result int64) {
 		fmt.Println("result: ", r.Number)
 		result = r.Number
 	}
+	processLog = entry.String()
 	return
 }

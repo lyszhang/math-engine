@@ -7,6 +7,10 @@
 package engine
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"github.com/dengsgo/math-engine/entry"
 	"github.com/dengsgo/math-engine/source"
 	paillier "github.com/roasbeef/go-go-gadget-paillier"
 	"math/big"
@@ -22,6 +26,21 @@ const (
 	TypeEnd
 )
 
+func (t ArithmeticType) String() string {
+	switch t {
+	case TypePaillier:
+		return "TypePaillier"
+	case TypeElgmel:
+		return "TypeElgmel"
+	case TypeConst:
+		return "TypeConst"
+	case TypeEnd:
+		return "TypeEnd"
+	default:
+		return "Unknown Type"
+	}
+}
+
 type numberEncrypted struct {
 	Data      []byte
 	PublicKey *paillier.PublicKey
@@ -33,10 +52,27 @@ type ArithmeticFactor struct {
 	Cipher numberEncrypted
 }
 
+func (a *ArithmeticFactor) String() string {
+	if a == nil {
+		return "nil"
+	}
+	switch a.Factor {
+	case TypeConst:
+		return fmt.Sprintf("{Factor: %s, Number: %d}", a.Factor.String(), a.Number)
+	case TypePaillier:
+		buf, _ := json.Marshal(a.Cipher.PublicKey)
+		return fmt.Sprintf("{Factor: %s, Data: %s, Pubkey: %s}", a.Factor, hex.EncodeToString(a.Cipher.Data),
+			string(buf))
+	default:
+		return "unknown ArithmeticFactor"
+	}
+}
+
 // ExprASTResultHE is a Top level function
 // AST traversal
 // if an arithmetic runtime error occurs, a panic exception is thrown
-func ExprASTResult(expr ExprAST) *ArithmeticFactor {
+func ExprASTResult(expr ExprAST) (res *ArithmeticFactor) {
+	defer func() { entry.Append(res.String() + "\n") }()
 	var l, r *ArithmeticFactor
 	switch expr.(type) {
 	case BinaryExprAST:
@@ -107,7 +143,7 @@ func ExprASTResult(expr ExprAST) *ArithmeticFactor {
 			}
 
 			// 如果双方都是密文数字
-			if l.Factor == TypeConst && r.Factor == TypeConst {
+			if l.Factor == TypePaillier && r.Factor == TypePaillier {
 				lh := l.Cipher.Data
 				rh := r.Cipher.Data
 				///TODO: 公钥比对

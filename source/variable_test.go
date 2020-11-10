@@ -6,7 +6,9 @@
 
 package source
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFetchExternalGravity(t *testing.T) {
 	FetchExternalGravity(nil, "x")

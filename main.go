@@ -47,8 +47,9 @@ func loop() {
 		//fmt.Print("input parameter query url/> ")
 
 		start := time.Now()
-		res := calculate.Exec(s)
+		res, plog := calculate.Exec(s)
 		fmt.Println("result: ", res)
+		fmt.Println("plog: ", plog)
 		cost := time.Since(start)
 		fmt.Println("time: " + cost.String())
 	}

@@ -11,11 +11,10 @@ import (
 	"github.com/dengsgo/math-engine/common"
 	"github.com/dengsgo/math-engine/engine"
 	"github.com/dengsgo/math-engine/entry"
-	"github.com/dengsgo/math-engine/source"
 )
 
 // call engine
-func Exec(exp string) (result int64, processLog string) {
+func Exec(exp string) (result *common.ArithmeticFactor, processLog string) {
 	entry.Reset()
 
 	// input text -> []token
@@ -50,16 +49,8 @@ func Exec(exp string) (result int64, processLog string) {
 		}
 	}()
 	// AST traversal -> result
-	r := engine.ExprASTResult(ar)
-	fmt.Printf("%s = %v\n", exp, r)
-
-	switch r.Factor {
-	case common.TypePaillier:
-		result, _ = source.UploadResult(r.Cipher.Data)
-	case common.TypeConst:
-		fmt.Println("result: ", r.Number)
-		result = r.Number
-	}
+	result = engine.ExprASTResult(ar)
+	fmt.Printf("%s = %v\n", exp, result)
 	processLog = entry.String()
 	return
 }

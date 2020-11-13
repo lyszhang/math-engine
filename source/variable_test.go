@@ -11,5 +11,5 @@ import (
 )
 
 func TestFetchExternalGravity(t *testing.T) {
-	FetchExternalGravity(nil, "x")
+	fetchExternalGravity(nil, "x")
 }

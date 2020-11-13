@@ -30,7 +30,18 @@ type QueryResponse struct {
 	Err error
 }
 
-func FetchExternalGravity(pos *ExternalGravityPosition, key string) ([]byte, *paillier.PublicKey, error) {
+func GetExternalGravity(key string) (*common.ArithmeticFactor, error) {
+	if value, ok := common.Cache.Get(key); ok {
+		fmt.Printf("key %s, value %s\n", key, value)
+		if f, ok := value.(common.ArithmeticFactor); ok {
+			return &f, nil
+		}
+	}
+	return fetchExternalGravity(nil, key)
+}
+
+// 优先从本地cache中寻找，没有的话才会从远端请求
+func fetchExternalGravity(pos *ExternalGravityPosition, key string) (*common.ArithmeticFactor, error) {
 	body := fmt.Sprintf("{\"S\": \"%s\"}", key)
 	res, err := http.Post("http://127.0.0.1:5666/query", "application/json;charset=utf-8",
 		bytes.NewBuffer([]byte(body)))
@@ -50,7 +61,13 @@ func FetchExternalGravity(pos *ExternalGravityPosition, key string) ([]byte, *pa
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 	}
-	return resp.Rs, &resp.Pub, nil
+	return &common.ArithmeticFactor{
+		Factor: common.TypePaillier,
+		Cipher: common.NumberEncrypted{
+			Data:      resp.Rs,
+			PublicKey: &resp.Pub,
+		},
+	}, nil
 }
 
 // UploadRequest collects the request parameters for the Query method.

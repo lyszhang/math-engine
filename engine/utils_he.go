@@ -202,11 +202,8 @@ func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 	case NumberExprAST:
 		return &common.ArithmeticFactor{Factor: common.TypeConst, Number: expr.(NumberExprAST).Val}
 	case ParameterExprAST:
-		data, pub, _ := source.FetchExternalGravity(nil, expr.(ParameterExprAST).Str)
-		return &common.ArithmeticFactor{Factor: common.TypePaillier, Cipher: common.NumberEncrypted{
-			Data:      data,
-			PublicKey: pub,
-		}}
+		f, _ := source.GetExternalGravity(expr.(ParameterExprAST).Str)
+		return f
 	case FunCallerExprAST:
 		f := expr.(FunCallerExprAST)
 		def := defFunc[f.Name]

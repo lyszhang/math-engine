@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/dengsgo/math-engine/calculate"
+	"github.com/dengsgo/math-engine/common"
+	"github.com/dengsgo/math-engine/source"
 	"os"
 	"strings"
 	"time"
@@ -35,7 +37,11 @@ func readStdin() (string, error) {
 
 // input loop
 func loop() {
-	engine.RegFunction("compare", 2, engine.Compare)
+	engine.RegFunction("COMPARE", 2, engine.Compare)
+	engine.RegFunction("COUNTONE", 0, engine.CountOne)
+	engine.RegFunction("RATIO", 4, engine.Ratio)
+	engine.RegFunction("MAX", 0, engine.Max)
+	engine.RegFunction("MIN", 0, engine.Min)
 	for {
 		fmt.Print("input formulation/> ")
 		s, err := readStdin()
@@ -47,8 +53,19 @@ func loop() {
 		//fmt.Print("input parameter query url/> ")
 
 		start := time.Now()
-		res, plog := calculate.Exec(s)
-		fmt.Println("result: ", res)
+		result, plog := calculate.Exec(s)
+
+		// demo 测试，尝试去客户端请求解密后的结果
+		var r int64
+		switch result.Factor {
+		case common.TypePaillier:
+			r, _ = source.UploadResult(result.Cipher.Data)
+		case common.TypeConst:
+			fmt.Println("result: ", result.Number)
+			r = result.Number
+		}
+
+		fmt.Println("result: ", r)
 		fmt.Println("plog: ", plog)
 		cost := time.Since(start)
 		fmt.Println("time: " + cost.String())

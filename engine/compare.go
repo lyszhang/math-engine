@@ -123,3 +123,86 @@ func Compare(expr ...ExprAST) *common.ArithmeticFactor {
 	fmt.Printf("compare unspport parameter type")
 	return nil
 }
+
+// 参数中有几个为1
+// CountOne(A, B...)
+// 参数必须为明文
+func CountOne(exprs ...ExprAST) *common.ArithmeticFactor {
+	var sum int64
+	for _, expr := range exprs {
+		exprAST := ExprASTResult(expr)
+
+		if exprAST.Factor != common.TypeConst {
+			fmt.Println("countOne must with const parameters")
+		}
+		if exprAST.Number == 1 {
+			sum += 1
+		}
+	}
+	return &common.ArithmeticFactor{
+		Factor: common.TypeConst,
+		Number: sum,
+	}
+}
+
+// 确定参数是否落在区间内
+// Ratio(0, 1, A, 3)
+// [0,1] 区间
+// A 参数
+// 如果落在区间内，返回系数3，否则返回0
+func Ratio(expr ...ExprAST) *common.ArithmeticFactor {
+	exprStart := expr[0]
+	exprEnd := expr[1]
+	exprPara := expr[2]
+	exprCoff := ExprASTResult(expr[3])
+
+	// 落在区间内
+	if Compare(exprStart, exprPara).Number <= int64(1) && Compare(exprEnd, exprPara).Number >= int64(1) {
+		return exprCoff
+	}
+
+	return &common.ArithmeticFactor{
+		Factor: common.TypeConst,
+		Number: 0,
+	}
+}
+
+// 求取区间内最大的数字
+// Max(A，1，B，C ...)
+// 参数可变长度，任意明文或密文
+// 返回最大值
+func Max(exprs ...ExprAST) *common.ArithmeticFactor {
+	var exprTmp ExprAST
+	for index, expr := range exprs {
+		if index == 0 {
+			exprTmp = expr
+			continue
+		}
+
+		//当小于新的值
+		if Compare(exprTmp, expr).Number == int64(0) {
+			exprTmp = expr
+		}
+	}
+	return ExprASTResult(exprTmp)
+}
+
+// 求取区间内最小的数字
+// Min(A，1，B，C ...)
+// 参数可变长度，任意明文或密文
+// 返回最小值
+func Min(exprs ...ExprAST) *common.ArithmeticFactor {
+	var exprTmp ExprAST
+	for index, expr := range exprs {
+		if index == 0 {
+			exprTmp = expr
+			continue
+		}
+
+		//当大于新的值
+		if Compare(exprTmp, expr).Number == int64(2) {
+			exprTmp = expr
+		}
+	}
+	return ExprASTResult(exprTmp)
+}

@@ -48,9 +48,9 @@ type NumberEncrypted struct {
 }
 
 type ArithmeticFactor struct {
-	Factor ArithmeticType
-	Number int64
-	Cipher NumberEncrypted
+	Factor ArithmeticType  `json:"Factor"`
+	Number int64           `json:"Number, omitempty"`
+	Cipher NumberEncrypted `json:"Cipher, omitempty"`
 }
 
 func (a *ArithmeticFactor) String() string {

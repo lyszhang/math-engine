@@ -79,9 +79,11 @@ func RegFunction(name string, argc int, fun func(...ExprAST) *common.ArithmeticF
 	if len(name) == 0 {
 		return errors.New("RegFunction name is not empty.")
 	}
-	if argc < 1 {
-		return errors.New("RegFunction argc is must has one arg at least.")
-	}
+
+	///TODO: 长度为0时，表示可变参数
+	//if argc < 1 {
+	//	return errors.New("RegFunction argc is must has one arg at least.")
+	//}
 	if _, ok := defFunc[name]; ok {
 		return errors.New("RegFunction name is already exist.")
 	}

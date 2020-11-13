@@ -117,7 +117,7 @@ func (a *AST) getTokPrecedence() int {
 }
 
 func (a *AST) parseNumber() NumberExprAST {
-	i64, err := strconv.ParseInt(a.currTok.Tok, 10,0)
+	i64, err := strconv.ParseInt(a.currTok.Tok, 10, 0)
 	if err != nil {
 		a.Err = errors.New(
 			fmt.Sprintf("%v\nwant '(' or '0-9' but get '%s'\n%s",
@@ -165,7 +165,8 @@ func (a *AST) parseFunCallerOrConst() ExprAST {
 			exprs = append(exprs, a.ParseExpression())
 		}
 		def := defFunc[name]
-		if len(exprs) != def.argc {
+		///TODO： 参数个数为0，暂时认为是可变长度
+		if len(exprs) != def.argc && def.argc != 0 {
 			a.Err = errors.New(
 				fmt.Sprintf("wrong way calling function `%s`, parameters want %d but get %d\n%s",
 					name,

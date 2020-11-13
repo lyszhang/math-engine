@@ -107,6 +107,11 @@ func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 				}
 			}
 
+			if (l.Factor == common.TypePaillier && r.Factor == common.TypeConst) || (l.Factor == common.TypeConst && r.
+				Factor == common.TypePaillier) {
+				entry.Append("!!!!!!Warning: don't support a cipher and a const number subtract operation!!!!!")
+			}
+
 		case "*":
 			// 如果双方都是明文数字
 			if l.Factor == common.TypeConst && r.Factor == common.TypeConst {

@@ -9,4 +9,4 @@ require (
 	github.com/stretchr/testify v1.6.1
 )
 
-replace github.com/roasbeef/go-go-gadget-paillier => github.com/lyszhang/go-go-gadget-paillier v0.0.0-20201109052812-ccb605dfbe54
+replace github.com/roasbeef/go-go-gadget-paillier => github.com/lyszhang/go-go-gadget-paillier v0.0.0-20201116065834-16752f36117c

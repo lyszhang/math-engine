@@ -89,6 +89,38 @@ func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 				}
 			}
 
+			// 如果是密文减明文
+			if l.Factor == common.TypePaillier && r.Factor == common.TypeConst {
+				lh := l.Cipher.Data
+				rh := new(big.Int).SetInt64(r.Number).Bytes()
+				pub := l.Cipher.PublicKey
+
+				subEandC := paillier.SubCipherWithConstant(pub, lh, rh)
+				return &common.ArithmeticFactor{
+					Factor: common.TypePaillier,
+					Cipher: common.NumberEncrypted{
+						Data:      subEandC,
+						PublicKey: pub,
+					},
+				}
+			}
+
+			// 如果是明文减密文
+			if l.Factor == common.TypeConst && r.Factor == common.TypePaillier {
+				lh := new(big.Int).SetInt64(l.Number).Bytes()
+				rh := r.Cipher.Data
+				pub := r.Cipher.PublicKey
+
+				subCandE := paillier.SubConstWithCipher(pub, lh, rh)
+				return &common.ArithmeticFactor{
+					Factor: common.TypePaillier,
+					Cipher: common.NumberEncrypted{
+						Data:      subCandE,
+						PublicKey: pub,
+					},
+				}
+			}
+
 			// 如果双方都是密文数字
 			if l.Factor == common.TypePaillier && r.Factor == common.TypePaillier {
 				lh := l.Cipher.Data

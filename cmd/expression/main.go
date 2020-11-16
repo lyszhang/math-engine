@@ -48,9 +48,9 @@ func loop() {
 		if err != nil {
 			break
 		}
-
-		//TODO: 外部请求路径的输入
-		//fmt.Print("input parameter query url/> ")
+		if len(s) == 0 {
+			continue
+		}
 
 		start := time.Now()
 		result, plog := calculate.Exec(s)

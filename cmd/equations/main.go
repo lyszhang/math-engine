@@ -54,6 +54,9 @@ func loop() {
 			if err != nil {
 				break
 			}
+			if len(s) == 0 {
+				continue
+			}
 			if strings.ToLower(s) == "end" {
 				break
 			}

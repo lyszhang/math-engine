@@ -8,8 +8,10 @@ package equation
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dengsgo/math-engine/calculate"
 	"github.com/dengsgo/math-engine/common"
+	"github.com/dengsgo/math-engine/entry"
 	"github.com/patrickmn/go-cache"
 	"strings"
 )
@@ -36,9 +38,8 @@ func ExecEquation(es []Equation) (result *common.ArithmeticFactor, processLog st
 
 	var log string
 	for index, e := range es {
-		r, plog := calculate.Exec(e.exp)
-
-		log = log + "\n" + plog
+		r := calculate.Exec(e.exp)
+		log = fmt.Sprintf("%s\n方程内容:%s\n%s", log, e.exp, entry.String())
 		if index == (len(es) - 1) {
 			return r, log
 		}

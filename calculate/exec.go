@@ -14,7 +14,7 @@ import (
 )
 
 // call engine
-func Exec(exp string) (result *common.ArithmeticFactor, processLog string) {
+func Exec(exp string) (result *common.ArithmeticFactor) {
 	entry.Reset()
 
 	// input text -> []token
@@ -27,7 +27,6 @@ func Exec(exp string) (result *common.ArithmeticFactor, processLog string) {
 	ast := engine.NewAST(toks, exp)
 	if ast.Err != nil {
 		entry.Append("ERROR: " + ast.Err.Error())
-		processLog = entry.String()
 		fmt.Println("ERROR: " + ast.Err.Error())
 		return
 	}
@@ -35,11 +34,10 @@ func Exec(exp string) (result *common.ArithmeticFactor, processLog string) {
 	ar := ast.ParseExpression()
 	if ast.Err != nil {
 		entry.Append("ERROR: " + ast.Err.Error())
-		processLog = entry.String()
 		fmt.Println("ERROR: " + ast.Err.Error())
 		return
 	}
-	fmt.Printf("ExprAST: %+v\n", ar)
+	fmt.Printf("Raw ExprAST: %+v\n", ar)
 	entry.Append(fmt.Sprintf("ExprAST: %+v\n", ar))
 
 	// catch runtime errors
@@ -50,7 +48,6 @@ func Exec(exp string) (result *common.ArithmeticFactor, processLog string) {
 	}()
 	// AST traversal -> result
 	result = engine.ExprASTResult(ar)
-	fmt.Printf("%s = %v\n", exp, result)
-	processLog = entry.String()
+	entry.Append(fmt.Sprintf("最终结果: %s\n", result.String()))
 	return
 }

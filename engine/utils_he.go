@@ -7,6 +7,7 @@
 package engine
 
 import (
+	"fmt"
 	"github.com/dengsgo/math-engine/common"
 	"github.com/dengsgo/math-engine/entry"
 	"github.com/dengsgo/math-engine/source"
@@ -19,7 +20,9 @@ import (
 // AST traversal
 // if an arithmetic runtime error occurs, a panic exception is thrown
 func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
-	defer func() { entry.Append(res.String() + "\n") }()
+	fmt.Printf("ExprAST: %+v\n", expr)
+	entry.Append(fmt.Sprintf("分解运算: ExprAST: %+v\n", expr))
+	defer func() { entry.Append(fmt.Sprintf("中间结果 %s\n", res.String())) }()
 	var l, r *common.ArithmeticFactor
 	switch expr.(type) {
 	case BinaryExprAST:

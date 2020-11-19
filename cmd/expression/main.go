@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dengsgo/math-engine/calculate"
 	"github.com/dengsgo/math-engine/common"
+	"github.com/dengsgo/math-engine/entry"
 	"github.com/dengsgo/math-engine/source"
 	"os"
 	"strings"
@@ -53,7 +54,8 @@ func loop() {
 		}
 
 		start := time.Now()
-		result, plog := calculate.Exec(s)
+		result := calculate.Exec(s)
+		plog := entry.String()
 
 		// demo 测试，尝试去客户端请求解密后的结果
 		var r int64

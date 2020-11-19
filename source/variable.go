@@ -8,6 +8,7 @@ package source
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/dengsgo/math-engine/common"
@@ -32,7 +33,6 @@ type QueryResponse struct {
 
 func GetExternalGravity(key string) (*common.ArithmeticFactor, error) {
 	if value, ok := common.Cache.Get(key); ok {
-		fmt.Printf("key %s, value %s\n", key, value)
 		if f, ok := value.(common.ArithmeticFactor); ok {
 			return &f, nil
 		}
@@ -42,6 +42,7 @@ func GetExternalGravity(key string) (*common.ArithmeticFactor, error) {
 
 // 优先从本地cache中寻找，没有的话才会从远端请求
 func fetchExternalGravity(pos *ExternalGravityPosition, key string) (*common.ArithmeticFactor, error) {
+	fmt.Printf("\033[1;31;40m 尝试从数据端取数据: %s\033[0m\n", key)
 	body := fmt.Sprintf("{\"S\": \"%s\"}", key)
 	res, err := http.Post("http://127.0.0.1:5666/query", "application/json;charset=utf-8",
 		bytes.NewBuffer([]byte(body)))
@@ -61,6 +62,7 @@ func fetchExternalGravity(pos *ExternalGravityPosition, key string) (*common.Ari
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 	}
+	fmt.Printf("\033[1;31;40m 接收到键值: %s 的密文 %s\033[0m\n", key, hex.EncodeToString(resp.Rs))
 	return &common.ArithmeticFactor{
 		Factor: common.TypePaillier,
 		Cipher: common.NumberEncrypted{
@@ -88,6 +90,7 @@ func UploadResult(r []byte) (int64, error) {
 		fmt.Println("Fatal error ", err.Error())
 	}
 
+	fmt.Printf("\033[1;31;40m 计算完成，回传密文结果: %s\033[0m\n", hex.EncodeToString(r))
 	res, err := http.Post("http://127.0.0.1:5666/upload", "application/json;charset=utf-8",
 		bytes.NewBuffer(body))
 	if err != nil {

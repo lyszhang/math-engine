@@ -68,7 +68,6 @@ func loop() {
 			es = append(es, *e)
 		}
 
-		fmt.Println("====es====: ", es)
 		start := time.Now()
 		result, plog := equation.ExecEquation(es)
 

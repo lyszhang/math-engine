@@ -7,9 +7,11 @@
 package source
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestFetchExternalGravity(t *testing.T) {
-	fetchExternalGravity(nil, "x")
+	fmt.Printf("\033[1;31;40m 模型表达式为: %s\033[0m\n", "red")
+	//fetchExternalGravity(nil, "x")
 }

@@ -11,14 +11,12 @@ import (
 	"github.com/dengsgo/math-engine/common"
 	"github.com/dengsgo/math-engine/entry"
 	"github.com/dengsgo/math-engine/source"
-	elgamel "github.com/lyszhang/go-homomorphic/elGamel"
-	paillier "github.com/roasbeef/go-go-gadget-paillier"
-	"math/big"
 )
 
 // ExprASTResultHE is a Top level function
 // AST traversal
 // if an arithmetic runtime error occurs, a panic exception is thrown
+// TODO: 默认当前支持小数点6位，统一转换，暂不考虑计算过程中出现小数位不一致的情况
 func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 	fmt.Printf("ExprAST: %+v\n", expr)
 	entry.Append(fmt.Sprintf("分解运算: ExprAST: %+v\n", expr))
@@ -33,191 +31,63 @@ func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 		case "+":
 			// 如果双方都是明文数字
 			if l.Factor == common.TypeConst && r.Factor == common.TypeConst {
-				return &common.ArithmeticFactor{
-					Factor: common.TypeConst,
-					Number: l.Number + r.Number,
-				}
+				return execAddCC(l, r)
 			}
 			// 如果左侧为常数，右侧为密文
 			if l.Factor == common.TypeConst && r.Factor == common.TypePaillier {
-				pub := r.Cipher.PublicKey
-				plusEandC := paillier.Add(pub, r.Cipher.Data,
-					new(big.Int).SetInt64(l.Number).Bytes())
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      plusEandC,
-						PublicKey: pub,
-					},
-				}
+				return execAddCE(l, r)
 			}
 			// 如果左侧为密文，右侧为明文
 			if l.Factor == common.TypePaillier && r.Factor == common.TypeConst {
-				pub := l.Cipher.PublicKey
-				plusCandE := paillier.Add(pub, l.Cipher.Data,
-					new(big.Int).SetInt64(r.Number).Bytes())
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      plusCandE,
-						PublicKey: pub,
-					},
-				}
+				return execAddCE(r, l)
 			}
 			// 如果双方均为密文
 			if l.Factor == common.TypePaillier && r.Factor == common.TypePaillier {
-				lh := l.Cipher.Data
-				rh := r.Cipher.Data
-				///TODO: 公钥比对
-				pub := l.Cipher.PublicKey
-				// Add the Cipher integers 15 and 15 together.
-				plusEandE := paillier.AddCipher(pub, lh, rh)
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Number: 0,
-					Cipher: common.NumberEncrypted{
-						Data:      plusEandE,
-						PublicKey: pub,
-					},
-				}
+				return execAddEE(l, r)
 			}
 
 		case "-":
 			// 如果双方都是明文数字
 			//TODO：如何检测负数结果的出现
 			if l.Factor == common.TypeConst && r.Factor == common.TypeConst {
-				return &common.ArithmeticFactor{
-					Factor: common.TypeConst,
-					Number: l.Number - r.Number,
-				}
+				return execSubCC(l, r)
 			}
 
 			// 如果是密文减明文
 			if l.Factor == common.TypePaillier && r.Factor == common.TypeConst {
-				lh := l.Cipher.Data
-				rh := new(big.Int).SetInt64(r.Number).Bytes()
-				pub := l.Cipher.PublicKey
-
-				subEandC := paillier.SubCipherWithConstant(pub, lh, rh)
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      subEandC,
-						PublicKey: pub,
-					},
-				}
+				return execSubEncryptToConst(l, r)
 			}
 
 			// 如果是明文减密文
 			if l.Factor == common.TypeConst && r.Factor == common.TypePaillier {
-				lh := new(big.Int).SetInt64(l.Number).Bytes()
-				rh := r.Cipher.Data
-				pub := r.Cipher.PublicKey
-
-				subCandE := paillier.SubConstWithCipher(pub, lh, rh)
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      subCandE,
-						PublicKey: pub,
-					},
-				}
+				return execSubConstToEncrypt(l, r)
 			}
 
 			// 如果双方都是密文数字
 			if l.Factor == common.TypePaillier && r.Factor == common.TypePaillier {
-				lh := l.Cipher.Data
-				rh := r.Cipher.Data
-				///TODO: 公钥比对
-				pub := l.Cipher.PublicKey
-				// Add the Cipher integers 15 and 15 together.
-				subEandE := paillier.SubCipher(pub, lh, rh)
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Number: 0,
-					Cipher: common.NumberEncrypted{
-						Data:      subEandE,
-						PublicKey: pub,
-					},
-				}
-			}
-
-			if (l.Factor == common.TypePaillier && r.Factor == common.TypeConst) || (l.Factor == common.TypeConst && r.
-				Factor == common.TypePaillier) {
-				entry.Append("!!!!!!Warning: don't support a cipher and a const number subtract operation!!!!!")
+				return execSubEE(l, r)
 			}
 
 		case "*":
 			// 如果双方都是明文数字
+			// 由于为了支持小数位，乘法比较特殊，结果需要除以10^6
 			if l.Factor == common.TypeConst && r.Factor == common.TypeConst {
-				return &common.ArithmeticFactor{
-					Factor: common.TypeConst,
-					Number: l.Number * r.Number,
-				}
+				return execMulCC(l, r)
 			}
 
 			// 如果左侧为常数，右侧为密文
 			if l.Factor == common.TypeConst && r.Factor == common.TypePaillier {
-				pub := r.Cipher.PublicKey
-				mulEandC := paillier.Mul(pub, r.Cipher.Data,
-					new(big.Int).SetInt64(l.Number).Bytes())
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      mulEandC,
-						PublicKey: pub,
-					},
-				}
+				return execMulCE(l, r)
 			}
 
 			// 如果左侧为密文，右侧为常数
 			if l.Factor == common.TypePaillier && r.Factor == common.TypeConst {
-				pub := l.Cipher.PublicKey
-				mulEandC := paillier.Mul(pub, l.Cipher.Data,
-					new(big.Int).SetInt64(r.Number).Bytes())
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      mulEandC,
-						PublicKey: pub,
-					},
-				}
+				return execMulCE(r, l)
 			}
 
 			// 如果两方均是paillier密文， 则需要重新使用ElGamel重新加密
 			if l.Factor == common.TypePaillier && r.Factor == common.TypePaillier {
-				///TODO: 校验是否使用相同的密钥加密出的
-
-				// re-encrypt
-				lpc := &common.CipherCompression{
-					T:            common.TypePaillier,
-					PaillierData: l.Cipher.Data,
-				}
-				lec, _ := source.TransformExternal(lpc)
-
-				rpc := &common.CipherCompression{
-					T:            common.TypePaillier,
-					PaillierData: r.Cipher.Data,
-				}
-				rec, _ := source.TransformExternal(rpc)
-
-				// mul
-				m := elgamel.Mul(&lec.ElGamalData, &rec.ElGamalData)
-
-				// re-encrypt
-				mec := &common.CipherCompression{
-					T:           common.TypeElgmel,
-					ElGamalData: *m,
-				}
-				mpc, _ := source.TransformExternal(mec)
-
-				return &common.ArithmeticFactor{
-					Factor: common.TypePaillier,
-					Cipher: common.NumberEncrypted{
-						Data:      mpc.PaillierData,
-						PublicKey: l.Cipher.PublicKey,
-					},
-				}
+				return execMulEE(l, r)
 			}
 
 		//case "/":
@@ -235,7 +105,9 @@ func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 
 		}
 	case NumberExprAST:
-		return &common.ArithmeticFactor{Factor: common.TypeConst, Number: expr.(NumberExprAST).Val}
+		// 将float64转化为整数
+		value, offset := Float64ToInterger(expr.(NumberExprAST).Val)
+		return &common.ArithmeticFactor{Factor: common.TypeConst, Number: value, Offset: offset}
 	case ParameterExprAST:
 		f, _ := source.GetExternalGravity(expr.(ParameterExprAST).Str)
 		return f

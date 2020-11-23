@@ -14,6 +14,7 @@ import (
 	"fmt"
 	elgamel "github.com/lyszhang/go-homomorphic/elGamel"
 	paillier "github.com/roasbeef/go-go-gadget-paillier"
+	"math"
 	"math/big"
 )
 
@@ -48,9 +49,15 @@ type NumberEncrypted struct {
 }
 
 type ArithmeticFactor struct {
-	Factor ArithmeticType  `json:"Factor"`
-	Number int64           `json:"Number, omitempty"`
-	Cipher NumberEncrypted `json:"Cipher, omitempty"`
+	Factor ArithmeticType  `json:"Factor"`            //类型
+	Number int64           `json:"Number, omitempty"` //如果是const明文，则显示明文数值；若为小数，则左移显示整数
+	Cipher NumberEncrypted `json:"Cipher, omitempty"` //如果是密文，则保存密文信息和加密公钥
+	Offset int64           `json:"Offset"`            //考虑浮点数，左移的偏移位数
+}
+
+func (a *ArithmeticFactor) Bytes() []byte {
+	buffer, _ := json.Marshal(a)
+	return buffer
 }
 
 func (a *ArithmeticFactor) String() string {
@@ -69,10 +76,18 @@ func (a *ArithmeticFactor) String() string {
 	}
 }
 
+func (a *ArithmeticFactor) Value() (float64, error) {
+	if a.Factor != TypeConst {
+		return float64(0), errors.New("can't solve thr factor type")
+	}
+	return float64(a.Number) / math.Pow10(int(a.Offset)), nil
+}
+
 type CipherCompression struct {
 	T            ArithmeticType     `json:"T"`
 	PaillierData []byte             `json:"paillier,omitempty"`
 	ElGamalData  elgamel.CipherData `json:"elgamel,omitempty"`
+	Offset       int64              `json:"offset"`
 }
 
 func (c *CipherCompression) TransformP2E(ppriv *paillier.PrivateKey, epub *elgamel.PublicKey) (*CipherCompression, error) {

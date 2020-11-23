@@ -72,13 +72,13 @@ func loop() {
 		result, plog := equation.ExecEquation(es)
 
 		// demo 测试，尝试去客户端请求解密后的结果
-		var r int64
+		var r float64
 		switch result.Factor {
 		case common.TypePaillier:
 			r, _ = source.UploadResult(result.Cipher.Data)
 		case common.TypeConst:
 			fmt.Println("result: ", result.Number)
-			r = result.Number
+			r, _ = result.Value()
 		}
 
 		fmt.Println("result: ", r)

@@ -15,7 +15,7 @@ type defS struct {
 // enum "RadianMode", "AngleMode"
 var TrigonometricMode = RadianMode
 
-var defConst = map[string]int64{}
+var defConst = map[string]float64{}
 
 var defFunc map[string]defS
 

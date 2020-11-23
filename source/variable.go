@@ -26,9 +26,10 @@ type ExternalGravityPosition struct {
 
 // QueryResponse collects the response values for the Query method.
 type QueryResponse struct {
-	Rs  []byte
-	Pub paillier.PublicKey
-	Err error
+	Rs     []byte
+	Offset int64
+	Pub    paillier.PublicKey
+	Err    error
 }
 
 func GetExternalGravity(key string) (*common.ArithmeticFactor, error) {
@@ -62,13 +63,14 @@ func fetchExternalGravity(pos *ExternalGravityPosition, key string) (*common.Ari
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 	}
-	fmt.Printf("\033[1;31;40m 接收到键值: %s 的密文 %s\033[0m\n", key, hex.EncodeToString(resp.Rs))
+	fmt.Printf("\033[1;31;40m 接收到键值: %s 的密文 %s, offset: %d\033[0m\n", key, hex.EncodeToString(resp.Rs), resp.Offset)
 	return &common.ArithmeticFactor{
 		Factor: common.TypePaillier,
 		Cipher: common.NumberEncrypted{
 			Data:      resp.Rs,
 			PublicKey: &resp.Pub,
 		},
+		Offset: resp.Offset,
 	}, nil
 }
 
@@ -79,11 +81,11 @@ type UploadRequest struct {
 
 // UploadResponse collects the response values for the Query method.
 type UploadResponse struct {
-	Rs  int64
+	Rs  float64
 	Err error
 }
 
-func UploadResult(r []byte) (int64, error) {
+func UploadResult(r []byte) (float64, error) {
 	req := UploadRequest{R: r}
 	body, err := json.Marshal(req)
 	if err != nil {

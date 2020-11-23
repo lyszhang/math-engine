@@ -13,7 +13,7 @@ type ExprAST interface {
 }
 
 type NumberExprAST struct {
-	Val int64
+	Val float64
 	Str string
 }
 
@@ -117,7 +117,7 @@ func (a *AST) getTokPrecedence() int {
 }
 
 func (a *AST) parseNumber() NumberExprAST {
-	i64, err := strconv.ParseInt(a.currTok.Tok, 10, 0)
+	f64, err := strconv.ParseFloat(a.currTok.Tok, 64)
 	if err != nil {
 		a.Err = errors.New(
 			fmt.Sprintf("%v\nwant '(' or '0-9' but get '%s'\n%s",
@@ -127,7 +127,7 @@ func (a *AST) parseNumber() NumberExprAST {
 		return NumberExprAST{}
 	}
 	n := NumberExprAST{
-		Val: i64,
+		Val: f64,
 		Str: a.currTok.Tok,
 	}
 	a.getNextToken()
@@ -183,7 +183,7 @@ func (a *AST) parseFunCallerOrConst() ExprAST {
 	if v, ok := defConst[name]; ok {
 		return NumberExprAST{
 			Val: v,
-			Str: strconv.FormatInt(v, 10),
+			Str: Float64ToStr(v),
 		}
 	} else {
 		a.Err = errors.New(

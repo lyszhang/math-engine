@@ -90,17 +90,28 @@ func ExprASTResult(expr ExprAST) (res *common.ArithmeticFactor) {
 				return execMulEE(l, r)
 			}
 
-		//case "/":
-		//	if r == 0 {
-		//		panic(errors.New(
-		//			fmt.Sprintf("violation of arithmetic specification: a division by zero in ExprASTResult: [%g/%g]",
-		//				l,
-		//				r)))
-		//	}
-		//	f, _ := new(big.Float).Quo(new(big.Float).SetFloat64(l), new(big.Float).SetFloat64(r)).Float64()
-		//	return f
-		//case "%":
-		//	return float64(int(l) % int(r))
+		case "/":
+			// 如果双方都是明文数字
+			if l.Factor == common.TypeConst && r.Factor == common.TypeConst {
+				return execDivCC(l, r)
+			}
+
+			// 如果左侧为密文，右侧为常数
+			if l.Factor == common.TypePaillier && r.Factor == common.TypeConst {
+				return execDivEC(r, l)
+			}
+
+			///TODO: 除数为密文暂不支持
+			// 如果左侧为常数，右侧为密文
+			if l.Factor == common.TypeConst && r.Factor == common.TypePaillier {
+				panic("not support")
+			}
+
+			// 如果两方均是paillier密文， 则需要重新使用ElGamel重新加密
+			if l.Factor == common.TypePaillier && r.Factor == common.TypePaillier {
+				panic("not support")
+			}
+
 		default:
 
 		}

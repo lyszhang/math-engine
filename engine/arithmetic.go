@@ -7,6 +7,8 @@
 package engine
 
 import (
+	"errors"
+	"fmt"
 	"github.com/dengsgo/math-engine/common"
 	"github.com/dengsgo/math-engine/source"
 	elgamel "github.com/lyszhang/go-homomorphic/elGamel"
@@ -288,5 +290,47 @@ func execMulEE(l, r *common.ArithmeticFactor) *common.ArithmeticFactor {
 			PublicKey: l.Cipher.PublicKey,
 		},
 		Offset: mec.Offset,
+	}
+}
+
+// 明文除法
+func execDivCC(l, r *common.ArithmeticFactor) *common.ArithmeticFactor {
+	//被除数不能为0
+	if r.Number == 0 && r.Factor == common.TypeConst {
+		panic(errors.New(
+			fmt.Sprintf("violation of arithmetic specification: a division by zero in ExprASTResult: [%g/%g]",
+				l,
+				r)))
+	}
+
+	quotient := l.Number * int64(math.Pow10(int(l.Offset))) / (r.Number * int64(math.Pow10(int(r.Offset))))
+	value, offset := Float64ToInterger(float64(quotient))
+	return &common.ArithmeticFactor{
+		Factor: common.TypeConst,
+		Number: value,
+		Offset: offset,
+	}
+}
+
+//密文除以明文
+func execDivEC(cipherFactor, constFactor *common.ArithmeticFactor) *common.ArithmeticFactor {
+	//被除数不能为0
+	if constFactor.Number == 0 && constFactor.Factor == common.TypeConst {
+		panic(errors.New(
+			fmt.Sprintf("violation of arithmetic specification: a division by zero in ExprASTResult: [%g/%g]",
+				cipherFactor, constFactor)))
+	}
+	pub := cipherFactor.Cipher.PublicKey
+	divisor := float64(1 / constFactor.Number)
+	value, offset := Float64ToInterger(divisor)
+
+	mulEandC := paillier.Mul(pub, cipherFactor.Cipher.Data, new(big.Int).SetInt64(value).Bytes())
+	return &common.ArithmeticFactor{
+		Factor: common.TypePaillier,
+		Cipher: common.NumberEncrypted{
+			Data:      mulEandC,
+			PublicKey: pub,
+		},
+		Offset: offset + cipherFactor.Offset,
 	}
 }
